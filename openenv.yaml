@@ -1,0 +1,7 @@
+name: code_review_env
+description: AI Code Review Environment
+
+tasks:
+  - easy_bug_detection
+  - logical_bug_detection
+  - full_pr_review

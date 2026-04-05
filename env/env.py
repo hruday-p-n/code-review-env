@@ -1,0 +1,50 @@
+from .models import Observation, Action
+from .tasks import TASKS
+from .graders import grade
+
+class CodeReviewEnv:
+
+    def __init__(self, task_name="easy_bug_detection"):
+        self.task_name = task_name
+        self.task = TASKS[task_name]
+        self.reset()
+
+    def reset(self):
+        self.comments = []
+        self.step_count = 0
+        return Observation(
+            pr_id=1,
+            files_changed=self.task["files"],
+            comments_so_far=[],
+            step_count=0
+        )
+
+    def step(self, action: Action):
+        self.step_count += 1
+        reward = 0.0
+        done = False
+        error = None
+
+        if action.action_type == "comment":
+            self.comments.append(action.comment or "")
+            reward = 0.1
+
+        elif action.action_type in ["approve", "request_changes"]:
+            score = grade(self.comments, self.task["expected_issues"])
+            reward = score
+            done = True
+
+        obs = Observation(
+            pr_id=1,
+            files_changed=self.task["files"],
+            comments_so_far=self.comments,
+            step_count=self.step_count
+        )
+
+        return obs, reward, done, {"error": error}
+
+    def state(self):
+        return {
+            "comments": self.comments,
+            "steps": self.step_count
+        }

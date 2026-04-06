@@ -17,9 +17,16 @@ for task in TASKS:
     while not done and step < 5:
         step += 1
 
+        if task == "easy_bug_detection":
+            comment = "syntax error because assignment operator used incorrectly"
+        elif task == "logical_bug_detection":
+            comment = "security issue because hardcoded password is a vulnerability"
+        else:
+            comment = "performance issue because inefficient loop and security issue due to hardcoded password"
+
         action = Action(
             action_type="comment",
-            comment="syntax error security performance issue"
+            comment=comment
         )
 
         obs, reward, done, info = env.step(action)

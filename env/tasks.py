@@ -6,7 +6,9 @@ TASKS = {
                 "diff": "if x = 5:\n    print(x)"
             }
         ],
-        "expected_issues": ["syntax"]
+        "expected_issues": [
+            {"type": "syntax", "severity": "high"}
+        ]
     },
 
     "logical_bug_detection": {
@@ -16,7 +18,9 @@ TASKS = {
                 "diff": "if password == 'admin':\n    login()"
             }
         ],
-        "expected_issues": ["security"]
+        "expected_issues": [
+            {"type": "security", "severity": "high"}
+        ]
     },
 
     "full_pr_review": {
@@ -30,6 +34,9 @@ TASKS = {
                 "diff": "if password == '1234':\n    login()"
             }
         ],
-        "expected_issues": ["performance", "security"]
+        "expected_issues": [
+            {"type": "performance", "severity": "medium"},
+            {"type": "security", "severity": "high"}
+        ]
     }
 }

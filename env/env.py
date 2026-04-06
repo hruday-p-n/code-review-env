@@ -25,9 +25,17 @@ class CodeReviewEnv:
         done = False
         error = None
 
+        expected_types = [i["type"] for i in self.task["expected_issues"]]
+
         if action.action_type == "comment":
-            self.comments.append(action.comment or "")
-            reward = 0.1
+            comment = action.comment or ""
+            self.comments.append(comment)
+
+            # smarter reward
+            if any(issue in comment.lower() for issue in expected_types):
+                reward = 0.3
+            else:
+                reward = 0.05
 
         elif action.action_type in ["approve", "request_changes"]:
             score = grade(self.comments, self.task["expected_issues"])

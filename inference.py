@@ -3,23 +3,24 @@ from openai import OpenAI
 from env.env import CodeReviewEnv
 from env.models import Action
 
-api_base = os.getenv("API_BASE_URL")
-api_key = os.getenv("API_KEY")
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4.1-mini")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-client = None
-if api_base and api_key:
-    client = OpenAI(
-        base_url=api_base,
-        api_key=api_key
-    )
+if HF_TOKEN is None:
+    raise ValueError("HF_TOKEN environment variable is required")
+
+client = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=HF_TOKEN
+)
 
 TASKS = ["easy_bug_detection", "logical_bug_detection", "full_pr_review"]
 
 for task in TASKS:
     env = CodeReviewEnv(task)
 
-    print(f"[START] task={task} env=code_review model=baseline")
+    print(f"[START] task={task} env=code_review model={MODEL_NAME}")
 
     obs = env.reset()
     rewards = []
@@ -30,27 +31,24 @@ for task in TASKS:
         step += 1
 
         if task == "easy_bug_detection":
-            prompt = "Find syntax issues in this code and explain briefly."
+            prompt = "Find syntax issues in this code."
         elif task == "logical_bug_detection":
-            prompt = "Find security issues in this code and explain briefly."
+            prompt = "Find security issues in this code."
         else:
-            prompt = "Find performance and security issues in this code and explain briefly."
+            prompt = "Find performance and security issues in this code."
 
-        if client:
-            try:
-                response = client.chat.completions.create(
-                    model=MODEL_NAME,
-                    messages=[
-                        {"role": "system", "content": "You are an expert code reviewer."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    max_tokens=60
-                )
-                comment = response.choices[0].message.content or ""
+        try:
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": "You are a code reviewer."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=60
+            )
+            comment = response.choices[0].message.content or ""
 
-            except Exception:
-                comment = ""
-        else:
+        except Exception:
             comment = ""
 
         if not comment.strip():
@@ -84,5 +82,4 @@ for task in TASKS:
 
     print(f"[STEP] step={step+1} action=request_changes reward={reward:.2f} done=true error=null")
 
-    score = reward
-    print(f"[END] success=true steps={step+1} score={score:.2f} rewards={','.join([f'{r:.2f}' for r in rewards])}")
+    print(f"[END] success=true steps={step+1} rewards={','.join([f'{r:.2f}' for r in rewards])}")

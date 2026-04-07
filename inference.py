@@ -3,12 +3,16 @@ from openai import OpenAI
 from env.env import CodeReviewEnv
 from env.models import Action
 
-client = OpenAI(
-    base_url=os.environ["API_BASE_URL"],
-    api_key=os.environ["API_KEY"]
-)
+api_base = os.getenv("API_BASE_URL")
+api_key = os.getenv("API_KEY")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 
-MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
+client = None
+if api_base and api_key:
+    client = OpenAI(
+        base_url=api_base,
+        api_key=api_key
+    )
 
 TASKS = ["easy_bug_detection", "logical_bug_detection", "full_pr_review"]
 
@@ -32,20 +36,24 @@ for task in TASKS:
         else:
             prompt = "Find performance and security issues in this code and explain briefly."
 
-        try:
-            response = client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=[
-                    {"role": "system", "content": "You are an expert code reviewer."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=60
-            )
+        if client:
+            try:
+                response = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    messages=[
+                        {"role": "system", "content": "You are an expert code reviewer."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=60
+                )
+                comment = response.choices[0].message.content or ""
 
-            comment = response.choices[0].message.content
+            except Exception:
+                comment = ""
+        else:
+            comment = ""
 
-        except Exception as e:
-            # fallback (in case API fails)
+        if not comment.strip():
             if task == "easy_bug_detection":
                 comment = "syntax error because assignment operator used incorrectly"
             elif task == "logical_bug_detection":

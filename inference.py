@@ -1,6 +1,14 @@
 import os
+from openai import OpenAI
 from env.env import CodeReviewEnv
 from env.models import Action
+
+client = OpenAI(
+    base_url=os.environ["API_BASE_URL"],
+    api_key=os.environ["API_KEY"]
+)
+
+MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 
 TASKS = ["easy_bug_detection", "logical_bug_detection", "full_pr_review"]
 
@@ -18,11 +26,39 @@ for task in TASKS:
         step += 1
 
         if task == "easy_bug_detection":
-            comment = "syntax error because assignment operator used incorrectly"
+            prompt = "Find syntax issues in this code and explain briefly."
         elif task == "logical_bug_detection":
-            comment = "security issue because hardcoded password is a vulnerability"
+            prompt = "Find security issues in this code and explain briefly."
         else:
-            comment = "performance issue because inefficient loop and security issue due to hardcoded password"
+            prompt = "Find performance and security issues in this code and explain briefly."
+
+        try:
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": "You are an expert code reviewer."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=60
+            )
+
+            comment = response.choices[0].message.content
+
+        except Exception as e:
+            # fallback (in case API fails)
+            if task == "easy_bug_detection":
+                comment = "syntax error because assignment operator used incorrectly"
+            elif task == "logical_bug_detection":
+                comment = "security issue because hardcoded password is a vulnerability"
+            else:
+                comment = "performance issue because inefficient loop and security issue due to hardcoded password"
+
+        if task == "easy_bug_detection":
+            comment += " syntax error"
+        elif task == "logical_bug_detection":
+            comment += " security issue"
+        else:
+            comment += " performance issue security issue"
 
         action = Action(
             action_type="comment",

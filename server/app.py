@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from env.env import CodeReviewEnv
 from env.models import Action
+import uvicorn
 
 app = FastAPI()
-
 env = CodeReviewEnv()
 
 @app.post("/reset")
@@ -25,3 +25,11 @@ def step(action: dict):
 @app.get("/")
 def root():
     return {"status": "ok"}
+
+
+def main():
+    uvicorn.run("server.app:app", host="0.0.0.0", port=7860)
+
+
+if __name__ == "__main__":
+    main()

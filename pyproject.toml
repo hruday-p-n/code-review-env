@@ -1,0 +1,14 @@
+[project]
+name = "code-review-env"
+version = "0.1.0"
+description = "AI Code Review OpenEnv environment"
+
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
